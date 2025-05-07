@@ -1,5 +1,8 @@
+const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
+require("dotenv").config(); 
+const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
 
 const authController = {}
 
@@ -21,6 +24,20 @@ authController.loginWithEmail=async(req,res)=>{
         
     }
 };
+authController.authenticate = async(req,res,next)=>{
+    try{
+        const tokenString = req.headers.authorization;
+        if(!tokenString) throw new Error("토큰을 찾을 수 없음");
+        const token = tokenString.replace("Bearer ","")
+        jwt.verify(token,JWT_SECRET_KEY,(error,payload)=>{
+            if(error) throw new Error("invalid token");
+            req.userId = payload._id;
+        });
+        next(); //authenticate 끝나고 getUser로 넘어감 (user.api 미드웨어)
+    }catch(error){
+        res.status(400).json({status:"fail",erro:error.message})
+    }
+}
 
 
 module.exports=authController;
