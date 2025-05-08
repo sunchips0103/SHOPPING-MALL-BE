@@ -1,13 +1,13 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 const productSchema = Schema({
-    sku:{type:String,require:true,unique:true},
-    name:{type:String,require:true},
-    image:{type:String,require:true},
-    category:{type:Array,require:true},
-    description:{type:String,require:true},
-    price:{type:Number,require:true},
-    stock:{type:Object,require:true},
+    sku:{type:String,required:true,unique:true},
+    name:{type:String,required:true},
+    image:{type:String,required:true},
+    category:{type:Array,required:true},
+    description:{type:String,required:true},
+    price:{type:Number,required:true},
+    stock:{type:Object,required:true},
     status:{type:String,default: "active"},
     isDeleted:{type:Boolean,default:false},
 
@@ -20,5 +20,5 @@ productSchema.methods.toJSON = function(){
     return obj
 }
 
-const Product = mongoose.model("Product",userSchema)
+const Product = mongoose.model("Product",productSchema)
 module.exports = Product;

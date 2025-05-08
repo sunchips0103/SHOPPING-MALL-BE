@@ -1,10 +1,10 @@
-const jwt = require("jsonwebtoken");
-const User = require("../models/User");
-const bcrypt = require("bcryptjs");
-require("dotenv").config(); 
+const jwt = require('jsonwebtoken');
+const User = require('../models/User');
+const bcrypt = require('bcryptjs');
+require('dotenv').config();
 const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
 
-const authController = {}
+const authController = {};
 
 authController.loginWithEmail=async(req,res)=>{
     try{
@@ -36,6 +36,17 @@ authController.authenticate = async(req,res,next)=>{
         next(); //authenticate 끝나고 getUser로 넘어감 (user.api 미드웨어)
     }catch(error){
         res.status(400).json({status:"fail",erro:error.message})
+    }
+};
+
+authController.checkAdminPermission = async(req,res,next)=>{
+    try{
+        const { userId } =req;
+        const user = await User.findById(userId);
+        if(user.level !=="admin")throw new Error("no permission")
+        next();
+    }catch(error){
+        res.status(400).json({status:"fail,", error:error.message})
     }
 }
 
