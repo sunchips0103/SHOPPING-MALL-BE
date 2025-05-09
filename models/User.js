@@ -23,6 +23,8 @@ userSchema.methods.generateToken = async function () {
       expiresIn: '1d',
     });
     return token;
+
+    
   };
 
 
