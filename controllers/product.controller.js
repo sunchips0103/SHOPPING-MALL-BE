@@ -34,8 +34,14 @@ productController.createProduct = async (req, res) => {
 };
 productController.getProducts = async(req,res)=>{
     try{
-      const products = await Product.find({});
-      res.status(200).json({status:"success",data:products})
+      const { page, name } = req.query;
+      const cond = name?{name:{$regex:name,$options:"i"}}:{}
+        //regex란 정규표현식
+        //options:"i" ->영어 대소문자 구분 x
+      let query = Product.find(cond);
+
+      const productList = await query.exec();
+      res.status(200).json({status:"success",data:productList})
     }catch(error){
       res.status(400).json({ status: 'fail', error: error.message });
     }
