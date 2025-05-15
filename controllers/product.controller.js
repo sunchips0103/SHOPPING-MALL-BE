@@ -34,10 +34,12 @@ productController.createProduct = async (req, res) => {
     res.status(400).json({ status: 'fail', error: error.message });
   }
 };
+// isDeleted: false
 productController.getProducts = async(req,res)=>{
     try{
       const { page, name } = req.query;
-      const cond = name?{name:{$regex:name,$options:"i"}}:{}
+      const cond = name?{name:{$regex:name,$options:"i"}, isDeleted: false}
+      :{ isDeleted: false}
         //regex란 정규표현식
         //options:"i" ->영어 대소문자 구분 x
       let query = Product.find(cond);
@@ -59,10 +61,26 @@ productController.getProducts = async(req,res)=>{
       res.status(400).json({ status: 'fail', error: error.message });
     }
   }
+//실제 삭제 로직
+productController.deleteProduct = async (req, res) => {
+  try {
+    const productId = req.params.id;
+    const product = await Product.findByIdAndUpdate(
+      { _id: productId },
+      { isDeleted: true }
+    );
+
+    if (!product) throw new Error("상품이 없음음");
+    res.status(200).json({ status: "success" });
+  } catch (error) {
+    return res.status(400).json({ status: "fail", error: error.message });
+  }
+};
+
 
   productController.updateProduct = async(req,res)=>{
     try{
-      const productId = req.param.id;
+      const productId = req.params.id;
       const {
         sku,
         name,
@@ -73,7 +91,7 @@ productController.getProducts = async(req,res)=>{
         category,
         stock,
         status
-      } = req.bdoy;
+      } = req.body;
 
       const product = await Product.findByIdAndUpdate({_id:productId},{
         sku,
@@ -93,5 +111,16 @@ productController.getProducts = async(req,res)=>{
 
     }
   };
+
+  productController.getProductById = async (req, res) => {
+  try {
+    const productId = req.params.id;
+    const product = await Product.findById(productId);
+    if (!product) throw new Error("No item found");
+    res.status(200).json({ status: "success", data: product });
+  } catch (error) {
+    return res.status(400).json({ status: "fail", error: error.message });
+  }
+};
 
 module.exports = productController;
