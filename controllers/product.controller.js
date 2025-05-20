@@ -70,7 +70,7 @@ productController.deleteProduct = async (req, res) => {
       { isDeleted: true }
     );
 
-    if (!product) throw new Error("상품이 없음음");
+    if (!product) throw new Error("상품이 없음");
     res.status(200).json({ status: "success" });
   } catch (error) {
     return res.status(400).json({ status: "fail", error: error.message });
@@ -122,5 +122,38 @@ productController.deleteProduct = async (req, res) => {
     return res.status(400).json({ status: "fail", error: error.message });
   }
 };
+  productController.checkStock=async(item)=>{
+    //내가 사려는 아이템 재고 정보들고오기
+    const product = await Product.findById(item.productId);
+    //내가 사려는 아이템 qty,재고비교
+    if(product.stock[item.size]<item.qty){
+      //재고 불충분하면 불충분 메세지와 함께 데이터 반환
+      return{isVerify:false,message:`${product.name}의${item.size}재고가 부족합니다`}
+    }
+    const newStock = {...product.stock};
+    newStock[item.size] -= item.qty;
+    product.stock=newStock;
+
+    await product.save();
+    //충분하다면, 재고에서 - qty, 성공 결과 보냄 
+    return{isVerify:true};
+  }  
+
+  productController.checkItemListStock=async(itemList)=>{
+    const insufficientStockItems= [] //재고가 불충분한 아이템을 저장할 계획
+    //재고 확인 로직
+    await Promise.all( //여러 비동기 한번에 처리:Promise.all (비동기 병렬 처리)
+    itemList.map(async(item)=>{ //아이템 하나하나 보기 위해 map 사용
+      const stockCheck = await productController.checkStock(item);
+      //checkItemListStock 전체 리스트 체크 ,checkStock 아이템 하나하나 focus
+      if(!stockCheck.isVerify){
+        insufficientStockItems.push({item,message:stockCheck.message});
+      }
+      return stockCheck;
+    }))
+
+
+    return insufficientStockItems;
+  }
 
 module.exports = productController;
