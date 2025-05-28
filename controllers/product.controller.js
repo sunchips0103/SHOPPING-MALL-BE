@@ -37,9 +37,14 @@ productController.createProduct = async (req, res) => {
 // isDeleted: false
 productController.getProducts = async(req,res)=>{
     try{
-      const { page, name } = req.query;
+      const { page, name ,max,min} = req.query;
       const cond = name?{name:{$regex:name,$options:"i"}, isDeleted: false}
       :{ isDeleted: false}
+      if (min || max) {
+        cond.price = {};
+        if (min) cond.price.$gte = Number(min);
+        if (max) cond.price.$lte = Number(max);
+    }
         //regex란 정규표현식
         //options:"i" ->영어 대소문자 구분 x
       let query = Product.find(cond);
@@ -153,7 +158,22 @@ productController.deleteProduct = async (req, res) => {
     }))
 
 
+
     return insufficientStockItems;
   }
+  productController.getProductsLevel = async (req, res) => {
+    try {
+      const level = Number(req.params.level);
+      const min = level * 500;
+      const max = (level + 1) * 500;
+
+      req.query.min = min;
+      req.query.max = max;
+
+      return await productController.getProducts(req, res);
+    } catch (error) {
+      res.status(400).json({ status: 'fail', error: error.message });
+    }
+  };
 
 module.exports = productController;

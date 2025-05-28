@@ -26,6 +26,9 @@ router.delete("/:id",
 
 router.get("/:id", productController.getProductById);
 
+router.get('/product/level/:level', productController.getProductsLevel);
+
+
 
 
 module.exports = router;
