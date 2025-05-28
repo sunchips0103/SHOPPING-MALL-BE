@@ -35,37 +35,41 @@ productController.createProduct = async (req, res) => {
   }
 };
 // isDeleted: false
-productController.getProducts = async(req,res)=>{
-    try{
-      const { page, name ,max,min} = req.query;
-      const cond = name?{name:{$regex:name,$options:"i"}, isDeleted: false}
-      :{ isDeleted: false}
-      if (min || max) {
-        cond.price = {};
-        if (min) cond.price.$gte = Number(min);
-        if (max) cond.price.$lte = Number(max);
-    }
-        //regex란 정규표현식
-        //options:"i" ->영어 대소문자 구분 x
-      let query = Product.find(cond);
-      let response = {status:"success"};
-      if(page){
-        query.skip((page-1)*PAGE_SIZE).limit(PAGE_SIZE) //limit 갖고싶은 데이터 최대수 ex 10개중 5개를 가지고 싶다.  skip 데이터를 건너뜀
-        //최종 몇개 페이지
-        //데이터가 총 몇개있는지 확인
-        const totalItemNum = await Product.countDocuments(cond);   
-        //테이터 총갯수 / PAGE_SIZE
-        const totalPageNum = Math.ceil(totalItemNum/PAGE_SIZE);
-        response.totalPageNum=totalPageNum;
-      }
+productController.getProducts = async (req, res) => {
+  try {
+    const { page, name, min, max } = req.query;
 
-      const productList = await query.exec();
-      response.data=productList
-      res.status(200).json(response);
-    }catch(error){
-      res.status(400).json({ status: 'fail', error: error.message });
+    const cond = { isDeleted: false };
+
+    if (name) {
+      cond.name = { $regex: name, $options: 'i' };
     }
+
+    // 가격 조건 정확히 숫자로 처리
+      if (min || max) {
+      cond.price = {};
+      if (min) cond.price.$gte = Number(min);
+      if (max) cond.price.$lte = Number(max);
+    }
+
+    let query = Product.find(cond);
+    const response = { status: 'success' };
+
+    if (page) {
+      query.skip((page - 1) * PAGE_SIZE).limit(PAGE_SIZE);
+
+      const totalItemNum = await Product.countDocuments(cond);
+      response.totalPageNum = Math.ceil(totalItemNum / PAGE_SIZE);
+    }
+
+    const productList = await query.exec();
+    response.data = productList;
+
+    res.status(200).json(response);
+  } catch (error) {
+    res.status(400).json({ status: 'fail', error: error.message });
   }
+};
 //실제 삭제 로직
 productController.deleteProduct = async (req, res) => {
   try {
@@ -161,19 +165,24 @@ productController.deleteProduct = async (req, res) => {
 
     return insufficientStockItems;
   }
-  productController.getProductsLevel = async (req, res) => {
-    try {
-      const level = Number(req.params.level);
-      const min = level * 500;
-      const max = (level + 1) * 500;
+productController.getProductsLevel = async (req, res) => {
+  try {
+    const level = Number(req.params.level);
+    const min = level * 500;
+    const max = (level + 1) * 500;
 
-      req.query.min = min;
-      req.query.max = max;
+    // getProducts를 직접 호출하지 말고 조건을 이 안에서 처리
+    const cond = {
+      isDeleted: false,
+      price: { $gte: min, $lt: max },
+    };
 
-      return await productController.getProducts(req, res);
-    } catch (error) {
-      res.status(400).json({ status: 'fail', error: error.message });
-    }
-  };
+    const productList = await Product.find(cond).exec();
+
+    res.status(200).json({ status: 'success', data: productList });
+  } catch (error) {
+    res.status(400).json({ status: 'fail', error: error.message });
+  }
+};
 
 module.exports = productController;

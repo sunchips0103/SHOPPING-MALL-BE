@@ -26,8 +26,7 @@ router.delete("/:id",
 
 router.get("/:id", productController.getProductById);
 
-router.get('/product/level/:level', productController.getProductsLevel);
-
+router.get('/level/:level', productController.getProductsLevel);
 
 
 
